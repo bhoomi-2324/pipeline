@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -26,9 +27,9 @@ pipeline {
                     variable: 'DOCKER_PAT'
                 )]) {
                     bat '''
-                    @echo off
-                    echo %DOCKER_PAT%|docker login -u bhoomi2324 --password-stdin
-                   if errorlevel 1 exit /b 1
+                        @echo off
+                        echo %DOCKER_PAT%| docker login -u bhoomi2324 --password-stdin
+                        if errorlevel 1 exit /b 1
                     '''
                 }
             }
