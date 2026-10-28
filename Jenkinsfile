@@ -1,35 +1,29 @@
-
 pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "bhoomi2324/docker"
+        DOCKER_IMAGE = "bhoomi2324/image"
     }
 
     stages {
-        stage('Clone Repository') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/bhoomi-2324/pipeline.git'
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t %DOCKER_IMAGE%:latest .'
+                script {
+                    docker.build("${DOCKER_IMAGE}:latest")
+                }
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
-                withCredentials([string(
+                withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-PAT',
-                    variable: 'DOCKER_PAT'
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
                 )]) {
                     bat '''
-                        @echo off
-                        echo %DOCKER_PAT%| docker login -u bhoomi2324 --password-stdin
-                        if errorlevel 1 exit /b 1
+                        powershell -NoProfile -NonInteractive -Command "$env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin"
                     '''
                 }
             }
@@ -37,17 +31,24 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                bat 'docker push %DOCKER_IMAGE%:latest'
+                script {
+                    docker.image("${DOCKER_IMAGE}:latest").push()
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Docker image built and pushed successfully.'
+            echo 'Image successfully built and pushed to Docker Hub!'
         }
+
         failure {
-            echo 'Pipeline failed. Check Console Output.'
+            echo 'Pipeline failed. Check Console Output for errors.'
+        }
+
+        always {
+            echo 'CI/CD pipeline execution completed.'
         }
     }
 }
